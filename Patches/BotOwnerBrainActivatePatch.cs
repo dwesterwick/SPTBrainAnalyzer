@@ -15,19 +15,19 @@ namespace SPTBrainAnalyzer.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(BotOwner).GetMethod("method_10", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(StandartBotBrain).GetMethod("Activate", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(BotOwner __instance)
+        private static void PatchPostfix(StandartBotBrain __instance, BotOwner ___botOwner_0)
         {
             if (ranAnalysis || !SPTBrainAnalyzerPlugin.Enabled.Value)
             {
                 return;
             }
 
-            BrainAnalyzerUtil.AnalyzeBrains(__instance);
             ranAnalysis = true;
+            BrainAnalyzerUtil.AnalyzeBrainsOfAllWildSpawnTypes(___botOwner_0);
         }
     }
 }
