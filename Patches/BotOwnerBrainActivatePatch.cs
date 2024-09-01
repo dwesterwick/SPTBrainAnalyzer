@@ -21,7 +21,17 @@ namespace SPTBrainAnalyzer.Patches
         [PatchPostfix]
         private static void PatchPostfix(StandartBotBrain __instance, BotOwner ___botOwner_0)
         {
-            if (ranAnalysis || !SPTBrainAnalyzerPlugin.Enabled.Value)
+            if (!SPTBrainAnalyzerPlugin.Enabled.Value)
+            {
+                return;
+            }
+
+            runAnalysis(___botOwner_0);
+        }
+
+        private static void runAnalysis(BotOwner ___botOwner_0)
+        {
+            if (ranAnalysis)
             {
                 return;
             }

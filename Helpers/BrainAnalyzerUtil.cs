@@ -14,10 +14,15 @@ namespace SPTBrainAnalyzer
     {
         private static readonly string CSVFilename = "BrainAnalysis.csv";
         private static readonly string CSVHeaderRow = "WildSpawnType,Brain Type,Brain Type Class,Layer Type,Layer Type Class,Layer Priority,Layer Index";
-        
+
         public static void AnalyzeBrainsOfAllWildSpawnTypes(BotOwner donorOwner)
         {
-            LoggingUtil.LogWarning("Analyzing brains...");
+            if (!SPTBrainAnalyzerPlugin.Enabled.Value || !SPTBrainAnalyzerPlugin.CreateCSVFile.Value)
+            {
+                return;
+            }
+
+            LoggingUtil.LogWarning("Analyzing brains using " + donorOwner.name + "...");
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(CSVHeaderRow);
@@ -48,10 +53,21 @@ namespace SPTBrainAnalyzer
 
             LoggingUtil.CreateLogFile(CSVFilename, sb.ToString());
 
+            donorOwner.Brain.BaseBrain.erase();
+
             donorOwner.Profile.Info.Settings.Role = currentWildSpawnType;
             donorOwner.Brain.Activate();
 
-            LoggingUtil.LogWarning("Analyzing brains...done.");
+            LoggingUtil.LogWarning("Analyzing brains...done. " + donorOwner.name + " is now broken!");
+
+            string message = "CSV brain dump complete. Please exit the raid!";
+            NotificationManagerClass.DisplayMessageNotification(message, EFT.Communications.ENotificationDurationType.Long, EFT.Communications.ENotificationIconType.Alert, UnityEngine.Color.red);
+        }
+
+        private static Dictionary<int, AICoreLayerClass<BotLogicDecision>> getBrainLayerDictionary(this BaseBrain brain)
+        {
+            FieldInfo brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
+            return (Dictionary<int, AICoreLayerClass<BotLogicDecision>>)brainDictionaryField.GetValue(brain);
         }
 
         private static List<string> getCSVLinesForBaseBrain(this BaseBrain brain, WildSpawnType wildSpawnType)
@@ -59,8 +75,7 @@ namespace SPTBrainAnalyzer
             List<string> CSVLines = new List<string>();
             Type brainType = brain.GetType();
 
-            FieldInfo brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
-            var brainDictionary = (Dictionary<int, AICoreLayerClass<BotLogicDecision>>)brainDictionaryField.GetValue(brain);
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.getBrainLayerDictionary();
 
             LoggingUtil.LogInfo($"{brain.ShortName()} ({brainType.Name}):");
             foreach (int layerIndex in brainDictionary.Keys)
@@ -71,6 +86,16 @@ namespace SPTBrainAnalyzer
             }
 
             return CSVLines;
+        }
+
+        private static void erase(this BaseBrain brain)
+        {
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.getBrainLayerDictionary();
+
+            foreach (int layerIndex in brainDictionary.Keys.ToArray())
+            {
+                brain.method_3(layerIndex);
+            }
         }
     }
 }
