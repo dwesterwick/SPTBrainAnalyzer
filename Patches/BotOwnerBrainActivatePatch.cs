@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SPT.Reflection.Patching;
 using EFT;
+using SPTBrainAnalyzer.Helpers;
 
 namespace SPTBrainAnalyzer.Patches
 {
@@ -26,6 +27,16 @@ namespace SPTBrainAnalyzer.Patches
                 return;
             }
 
+            try
+            {
+                LogicPatchManager.UpdateActiveBrainLayers(___botOwner_0);
+            }
+            catch (Exception e)
+            {
+                LoggingUtil.LogError("Cannot update active brain layers for " + ___botOwner_0.name + ": " + e.Message);
+                LoggingUtil.LogError(e.StackTrace);
+            }
+
             runAnalysis(___botOwner_0);
         }
 
@@ -37,7 +48,16 @@ namespace SPTBrainAnalyzer.Patches
             }
 
             ranAnalysis = true;
-            BrainAnalyzerUtil.AnalyzeBrainsOfAllWildSpawnTypes(___botOwner_0);
+
+            try
+            {
+                BrainAnalyzerUtil.AnalyzeBrainsOfAllWildSpawnTypes(___botOwner_0);
+            }
+            catch (Exception e)
+            {
+                LoggingUtil.LogError("Cannot run brain-layer analysis on " + ___botOwner_0.name + ": " + e.Message);
+                LoggingUtil.LogError(e.StackTrace);
+            }
         }
     }
 }

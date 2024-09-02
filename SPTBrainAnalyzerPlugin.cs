@@ -37,7 +37,12 @@ namespace SPTBrainAnalyzer
         {
             EFT.WildSpawnType.assault.ToggleLogic("AssaultHaveEnemy", false);
             EFT.WildSpawnType.assault.ToggleLogic("Simple Target", false);
-            //EFT.WildSpawnType.assault.ToggleLogic("Help", false);
+            EFT.WildSpawnType.assault.ToggleLogic("Help", false);
+            EFT.WildSpawnType.assault.ToggleLogic("Pursuit", false);
+
+            EFT.WildSpawnType.assaultGroup.ToggleLogic("AssaultHaveEnemy", false);
+            EFT.WildSpawnType.assaultGroup.ToggleLogic("AdvAssaultTarget", false);
+            EFT.WildSpawnType.assaultGroup.ToggleLogic("Pmc", false);
         }
     }
 }

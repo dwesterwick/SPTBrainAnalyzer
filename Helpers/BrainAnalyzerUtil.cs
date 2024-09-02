@@ -64,7 +64,7 @@ namespace SPTBrainAnalyzer
             NotificationManagerClass.DisplayMessageNotification(message, EFT.Communications.ENotificationDurationType.Long, EFT.Communications.ENotificationIconType.Alert, UnityEngine.Color.red);
         }
 
-        private static Dictionary<int, AICoreLayerClass<BotLogicDecision>> getBrainLayerDictionary(this BaseBrain brain)
+        public static Dictionary<int, AICoreLayerClass<BotLogicDecision>> GetBrainLayerDictionary(this BaseBrain brain)
         {
             FieldInfo brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
             return (Dictionary<int, AICoreLayerClass<BotLogicDecision>>)brainDictionaryField.GetValue(brain);
@@ -75,7 +75,7 @@ namespace SPTBrainAnalyzer
             List<string> CSVLines = new List<string>();
             Type brainType = brain.GetType();
 
-            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.getBrainLayerDictionary();
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.GetBrainLayerDictionary();
 
             LoggingUtil.LogInfo($"{brain.ShortName()} ({brainType.Name}):");
             foreach (int layerIndex in brainDictionary.Keys)
@@ -90,7 +90,7 @@ namespace SPTBrainAnalyzer
 
         private static void erase(this BaseBrain brain)
         {
-            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.getBrainLayerDictionary();
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.GetBrainLayerDictionary();
 
             foreach (int layerIndex in brainDictionary.Keys.ToArray())
             {

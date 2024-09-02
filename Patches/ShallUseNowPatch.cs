@@ -34,17 +34,15 @@ namespace SPTBrainAnalyzer.Patches
 
             addKeysIfNeeded(___botOwner_0);
 
-            if (updateTimers[___botOwner_0].ElapsedMilliseconds < updateDelay)
+            if (updateTimers[___botOwner_0].ElapsedMilliseconds > updateDelay)
             {
-                return !isLogicDisabled[___botOwner_0];
-            }
+                updateTimers[___botOwner_0].Restart();
 
-            updateTimers[___botOwner_0].Restart();
-
-            isLogicDisabled[___botOwner_0] = ___botOwner_0.Profile.Info.Settings.Role.IsLogicDisabled(typeof(T), ___botOwner_0.Profile.Side);
-            if (isLogicDisabled[___botOwner_0])
-            {
-                LoggingUtil.LogInfo("Suppressing ShallUseNow for logic " + __instance.Name() + " for " + ___botOwner_0.name);
+                isLogicDisabled[___botOwner_0] = ___botOwner_0.Profile.Info.Settings.Role.IsLogicDisabled(typeof(T), ___botOwner_0.Profile.Side);
+                if (isLogicDisabled[___botOwner_0])
+                {
+                    LoggingUtil.LogInfo("Suppressing ShallUseNow for logic " + __instance.Name() + " for " + ___botOwner_0.name);
+                }
             }
 
             __result = !isLogicDisabled[___botOwner_0];

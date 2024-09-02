@@ -3,6 +3,7 @@ using SPTBrainAnalyzer.Models;
 using SPTBrainAnalyzer.Patches;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -12,11 +13,10 @@ namespace SPTBrainAnalyzer.Helpers
 {
     public static class LogicPatchManager
     {
-        private static Type[] allBaseBrainTypes = null;
-        private static Type[] allBaseLogicTypes = null;
         private static Dictionary<string, Type> logicNames = new Dictionary<string, Type>();
         private static Dictionary<Type, object> logicPatches = new Dictionary<Type, object>();
         private static Dictionary<LogicSettings, bool> isLogicDisabled = new Dictionary<LogicSettings, bool>();
+        private static Dictionary<LogicSettings, bool> pendingLogicToToggle = new Dictionary<LogicSettings, bool>();
 
         public static bool IsLogicDisabled(this WildSpawnType role, Type logicType, EPlayerSide side)
         {
@@ -29,98 +29,64 @@ namespace SPTBrainAnalyzer.Helpers
             return false;
         }
 
-        public static void ToggleLogic(this WildSpawnType role, Type logicType, bool value, EPlayerSideMask sideMask = EPlayerSideMask.All)
+        public static void UpdateActiveBrainLayers(this BotOwner bot)
         {
-            if (!logicPatches.ContainsKey(logicType))
-            {
-                logicPatches.Add(logicType, createShallUseNowPatch(logicType));
-            }
+            bot.Brain.BaseBrain.readAllBrainLayers();
+            updateAllPendingLogicTypes();
 
-            LogicSettings settings = findLogicSettings(logicType, role, sideMask);
+            foreach (LogicSettings settings in pendingLogicToToggle.Keys.ToArray())
+            {
+                if (!settings.HasLogicType)
+                {
+                    continue;
+                }
+
+                if (!settings.Matches(bot))
+                {
+                    continue;
+                }
+
+                if (isLogicDisabled.ContainsKey(settings))
+                {
+                    isLogicDisabled[settings] = pendingLogicToToggle[settings];
+                }
+                else
+                {
+                    isLogicDisabled.Add(settings, pendingLogicToToggle[settings]);
+                }
+
+                pendingLogicToToggle.Remove(settings);
+
+                createShallUseNowPatch(settings.LogicType);
+            }
+        }
+
+        public static void ToggleLogic(this WildSpawnType role, string logicName, bool value, EPlayerSideMask sideMask = EPlayerSideMask.All)
+        {
+            LogicSettings settings = findLogicSettings(logicName, role, sideMask);
             if (settings != null)
             {
                 isLogicDisabled[settings] = !value;
                 return;
             }
 
-            isLogicDisabled.Add(new LogicSettings(logicType, role, sideMask), !value);
-        }
-
-        public static void ToggleLogic(this WildSpawnType role, string logicName, bool value, EPlayerSideMask sideMask = EPlayerSideMask.All)
-        {
-            role.ToggleLogic(FindBaseLogicLayerSimpleAbstractClass(logicName), value, sideMask);
-        }
-
-        public static IEnumerable<Type> GetAllBaseBrainTypes()
-        {
-            if (allBaseBrainTypes != null)
+            settings = findPendingLogicSettings(logicName, role, sideMask);
+            if (settings != null)
             {
-                return allBaseBrainTypes;
+                pendingLogicToToggle[settings] = !value;
+                return;
             }
 
-            allBaseBrainTypes = SPT.Reflection.Utils.PatchConstants.EftTypes
-                .Where(t => typeof(BaseBrain).IsAssignableFrom(t))
-                .Where(t => !t.IsAbstract)
-                .ToArray();
-
-            return allBaseBrainTypes;
-        }
-
-        public static IEnumerable<Type> GetAllBaseLogicTypes()
-        {
-            if (allBaseLogicTypes != null)
-            {
-                return allBaseLogicTypes;
-            }
-
-            allBaseLogicTypes = SPT.Reflection.Utils.PatchConstants.EftTypes
-                .Where(t => typeof(BaseLogicLayerSimpleAbstractClass).IsAssignableFrom(t))
-                .Where(t => !t.IsAbstract)
-                .ToArray();
-
-            return allBaseLogicTypes;
-        }
-
-        public static Type FindBaseLogicLayerSimpleAbstractClass(string desiredLogicName)
-        {
-            if (logicNames.ContainsKey(desiredLogicName))
-            {
-                return logicNames[desiredLogicName];
-            }
-
-            foreach (Type logicType in GetAllBaseLogicTypes())
-            {
-                var logic = Activator.CreateInstance(logicType, logicType.getDefaultConstructorArgumentsForBaseLogicType());
-
-                MethodInfo nameMethodInfo = logicType.GetMethod("Name");
-                string logicName = (string)nameMethodInfo.Invoke(logic, null);
-
-                if (logicName == desiredLogicName)
-                {
-                    logicNames.Add(logicName, logicType);
-
-                    return logicType;
-                }
-            }
-
-            LoggingUtil.LogError("Cannot find type for " + desiredLogicName);
-
-            return null;
-        }
-
-        private static object createShallUseNowPatch(string logicName)
-        {
-            Type logicType = FindBaseLogicLayerSimpleAbstractClass(logicName);
-            if (logicType == null)
-            {
-                throw new InvalidOperationException("Cannot find logic class for " + logicName);
-            }
-
-            return createShallUseNowPatch(logicType);
+            pendingLogicToToggle.Add(new LogicSettings(logicName, role, sideMask), !value);
         }
 
         private static object createShallUseNowPatch(Type logicType)
         {
+            if (logicPatches.ContainsKey(logicType))
+            {
+                return logicPatches[logicType];
+            }
+
             object patch = Activator.CreateInstance(typeof(ShallUseNowPatch<>).MakeGenericType(logicType), new object[0]);
             if (patch == null)
             {
@@ -135,34 +101,11 @@ namespace SPTBrainAnalyzer.Helpers
             return patch;
         }
 
-        private static LogicSettings findLogicSettings(string logicName, WildSpawnType role, EPlayerSideMask sideMask = EPlayerSideMask.All)
-        {
-            return findLogicSettings(FindBaseLogicLayerSimpleAbstractClass(logicName), role, sideMask);
-        }
-
-        private static LogicSettings findLogicSettings(Type logicType, WildSpawnType role, EPlayerSideMask sideMask = EPlayerSideMask.All)
-        {
-            foreach (LogicSettings settings in isLogicDisabled.Keys)
-            {
-                if ((settings.LogicType == logicType) && (settings.Role == role) && (settings.SideMask == sideMask))
-                {
-                    return settings;
-                }
-            }
-
-            return null;
-        }
-
-        private static LogicSettings findLogicSettings(string logicName, WildSpawnType role, EPlayerSide side)
-        {
-            return findLogicSettings(FindBaseLogicLayerSimpleAbstractClass(logicName), role, side);
-        }
-
         private static LogicSettings findLogicSettings(Type logicType, WildSpawnType role, EPlayerSide side)
         {
             foreach (LogicSettings settings in isLogicDisabled.Keys)
             {
-                if ((settings.LogicType == logicType) && (settings.Role == role) && settings.SideMask.CheckSide(side))
+                if (settings.Matches(role, side, logicType))
                 {
                     return settings;
                 }
@@ -171,38 +114,66 @@ namespace SPTBrainAnalyzer.Helpers
             return null;
         }
 
-        private static object[] getDefaultConstructorArgumentsForBaseBrainType(this Type brainType, BotOwner botOwner = null)
+        private static LogicSettings findLogicSettings(string logicName, WildSpawnType role, EPlayerSideMask sideMask = EPlayerSideMask.All)
         {
-            List<object> arguments = new List<object>() { botOwner };
-            ConstructorInfo[] constructors = brainType.GetConstructors();
-            ParameterInfo[] parameters = constructors[0].GetParameters();
-
-            for (int p = 1; p < parameters.Length; p++)
+            foreach (LogicSettings settings in isLogicDisabled.Keys)
             {
-                Type parameterType = parameters[p].ParameterType;
-                object defaultParamterValue = Activator.CreateInstance(parameterType);
-
-                arguments.Add(defaultParamterValue);
+                if (settings.Matches(role, sideMask, logicName))
+                {
+                    return settings;
+                }
             }
 
-            return arguments.ToArray();
+            return null;
         }
 
-        private static object[] getDefaultConstructorArgumentsForBaseLogicType(this Type brainType, BotOwner botOwner = null, int priority = -1)
+        private static LogicSettings findPendingLogicSettings(string logicName, WildSpawnType role, EPlayerSideMask sideMask = EPlayerSideMask.All)
         {
-            List<object> arguments = new List<object>() { botOwner, priority };
-            ConstructorInfo[] constructors = brainType.GetConstructors();
-            ParameterInfo[] parameters = constructors[0].GetParameters();
-
-            for (int p = 2; p < parameters.Length; p++)
+            foreach (LogicSettings settings in pendingLogicToToggle.Keys)
             {
-                Type parameterType = parameters[p].ParameterType;
-                object defaultParamterValue = Activator.CreateInstance(parameterType);
-
-                arguments.Add(defaultParamterValue);
+                if ((settings.LogicName == logicName) && (settings.Role == role) && (settings.SideMask == sideMask))
+                {
+                    return settings;
+                }
             }
 
-            return arguments.ToArray();
+            return null;
+        }
+
+        private static void readAllBrainLayers(this BaseBrain brain)
+        {
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> botBrainLayerDictionary = brain.GetBrainLayerDictionary();
+            foreach (int index in botBrainLayerDictionary.Keys)
+            {
+                string logicName = botBrainLayerDictionary[index].Name();
+
+                if (logicNames.ContainsKey(logicName))
+                {
+                    continue;
+                }
+
+                Type logicType = botBrainLayerDictionary[index].GetType();
+                logicNames.Add(logicName, logicType);
+            }
+        }
+
+        private static void updateAllPendingLogicTypes()
+        {
+            foreach (LogicSettings settings in pendingLogicToToggle.Keys)
+            {
+                if (settings.HasLogicType)
+                {
+                    continue;
+                }
+
+                foreach (string name in logicNames.Keys)
+                {
+                    if (settings.LogicName == name)
+                    {
+                        settings.RegisterLogicType(logicNames[name]);
+                    }
+                }
+            }
         }
     }
 }
