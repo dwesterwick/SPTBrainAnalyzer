@@ -40,6 +40,11 @@ namespace SPTBrainAnalyzer.Models
             return Matches(bot.Profile.Info.Settings.Role, bot.Profile.Side);
         }
 
+        public bool Matches(DisabledLogicSettings settings)
+        {
+            return Matches(settings.Role, settings.Side, settings.Layer.GetType());
+        }
+
         public bool Matches(WildSpawnType role, EPlayerSide side)
         {
             if (Role != role)

@@ -15,6 +15,8 @@ namespace SPTBrainAnalyzer
         private static readonly string CSVFilename = "BrainAnalysis.csv";
         private static readonly string CSVHeaderRow = "WildSpawnType,Brain Type,Brain Type Class,Layer Type,Layer Type Class,Layer Priority,Layer Index";
 
+        private static FieldInfo brainDictionaryField = null;
+
         public static void AnalyzeBrainsOfAllWildSpawnTypes(BotOwner donorOwner)
         {
             if (!SPTBrainAnalyzerPlugin.Enabled.Value || !SPTBrainAnalyzerPlugin.CreateCSVFile.Value)
@@ -66,8 +68,12 @@ namespace SPTBrainAnalyzer
 
         public static Dictionary<int, AICoreLayerClass<BotLogicDecision>> GetBrainLayerDictionary(this BaseBrain brain)
         {
-            FieldInfo brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
-            return (Dictionary<int, AICoreLayerClass<BotLogicDecision>>)brainDictionaryField.GetValue(brain);
+            if (brainDictionaryField == null)
+            {
+                brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
+            }
+
+            return brainDictionaryField.GetValue(brain) as Dictionary<int, AICoreLayerClass<BotLogicDecision>>;
         }
 
         private static List<string> getCSVLinesForBaseBrain(this BaseBrain brain, WildSpawnType wildSpawnType)

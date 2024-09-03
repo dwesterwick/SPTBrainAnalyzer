@@ -16,6 +16,8 @@ namespace SPTBrainAnalyzer
         public static ConfigEntry<bool> CreateCSVFile;
         public static ConfigEntry<bool> ShowDebugMessages;
 
+        public static ConfigEntry<bool> DisableTestLogics;
+
         private void Awake()
         {
             Logger.LogInfo("Loading BrainAnalyzer...");
@@ -25,24 +27,43 @@ namespace SPTBrainAnalyzer
             new Patches.BotOwnerBrainActivatePatch().Enable();
 
             Enabled = Config.Bind("Main", "Enabled", true, "Enable all features of this mod");
-            CreateCSVFile = Config.Bind("Main", "Create CSV File", true, "Create a CSV file of all EFT brain types and brain layers when the first bot is generated");
+            CreateCSVFile = Config.Bind("Main", "Create CSV File", false, "Create a CSV file of all EFT brain types and brain layers when the first bot is generated");
             ShowDebugMessages = Config.Bind("Main", "Show debug messages", false, "Show additional debugging information");
+
+            DisableTestLogics = Config.Bind("Test", "Disable Test Logics", true, "[For testing] Disable comabat layers for normal Scavs");
+
+            createConfigEvents();
 
             Logger.LogInfo("Loading BrainAnalyzer...done.");
 
-            disableLogicsTest();
+            toggleTestLogics(!DisableTestLogics.Value);
         }
 
-        private void disableLogicsTest()
+        private void createConfigEvents()
         {
-            EFT.WildSpawnType.assault.ToggleLogic("AssaultHaveEnemy", false);
-            EFT.WildSpawnType.assault.ToggleLogic("Simple Target", false);
-            EFT.WildSpawnType.assault.ToggleLogic("Help", false);
-            EFT.WildSpawnType.assault.ToggleLogic("Pursuit", false);
+            Enabled.SettingChanged += (object sender, EventArgs e) =>
+            {
+                LogicPatchManager.ApplyChanges();
+            };
 
-            EFT.WildSpawnType.assaultGroup.ToggleLogic("AssaultHaveEnemy", false);
-            EFT.WildSpawnType.assaultGroup.ToggleLogic("AdvAssaultTarget", false);
-            EFT.WildSpawnType.assaultGroup.ToggleLogic("Pmc", false);
+            DisableTestLogics.SettingChanged += (object sender, EventArgs e) =>
+            {
+                toggleTestLogics(!DisableTestLogics.Value);
+            };
+        }
+
+        private void toggleTestLogics(bool value)
+        {
+            EFT.WildSpawnType.assault.ToggleLogic("AssaultHaveEnemy", value);
+            EFT.WildSpawnType.assault.ToggleLogic("Simple Target", value);
+            EFT.WildSpawnType.assault.ToggleLogic("Help", value);
+            EFT.WildSpawnType.assault.ToggleLogic("Pursuit", value);
+
+            EFT.WildSpawnType.assaultGroup.ToggleLogic("AssaultHaveEnemy", value);
+            EFT.WildSpawnType.assaultGroup.ToggleLogic("AdvAssaultTarget", value);
+            EFT.WildSpawnType.assaultGroup.ToggleLogic("Pmc", value);
+
+            LogicPatchManager.ApplyChanges();
         }
     }
 }

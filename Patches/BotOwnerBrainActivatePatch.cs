@@ -22,11 +22,6 @@ namespace SPTBrainAnalyzer.Patches
         [PatchPostfix]
         private static void PatchPostfix(StandartBotBrain __instance, BotOwner ___botOwner_0)
         {
-            if (!SPTBrainAnalyzerPlugin.Enabled.Value)
-            {
-                return;
-            }
-
             try
             {
                 LogicPatchManager.UpdateActiveBrainLayers(___botOwner_0);

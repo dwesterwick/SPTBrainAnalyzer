@@ -74,6 +74,7 @@
     <Compile Include="Helpers\BrainAnalyzerUtil.cs" />
     <Compile Include="Helpers\LoggingUtil.cs" />
     <Compile Include="Helpers\LogicPatchManager.cs" />
+    <Compile Include="Models\DisabledLogicSettings.cs" />
     <Compile Include="Models\LogicSettings.cs" />
     <Compile Include="Patches\BotOwnerBrainActivatePatch.cs" />
     <Compile Include="Patches\ShallUseNowPatch.cs" />
