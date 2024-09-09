@@ -49,6 +49,9 @@
     <Reference Include="DissonanceVoip">
       <HintPath>..\..\..\..\..\Escape from Tarkov Single Player 3.9.6\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll</HintPath>
     </Reference>
+    <Reference Include="DrakiaXYZ-BigBrain">
+      <HintPath>..\..\..\..\BepInEx\plugins\DrakiaXYZ-BigBrain.dll</HintPath>
+    </Reference>
     <Reference Include="spt-common">
       <HintPath>..\..\..\..\..\Escape from Tarkov Single Player 3.9.6\BepInEx\plugins\spt\spt-common.dll</HintPath>
     </Reference>

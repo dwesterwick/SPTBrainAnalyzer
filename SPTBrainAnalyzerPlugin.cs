@@ -36,20 +36,47 @@ namespace SPTBrainAnalyzer
 
             Logger.LogInfo("Loading BrainAnalyzer...done.");
 
-            toggleTestLogics(!DisableTestLogics.Value);
+            if (LogicPatchManager.Method == LogicDisablingMethod.BigBrain)
+            {
+                toggleLayers(null, new EventArgs());
+            }
+            else
+            {
+                toggleTestLogics(!DisableTestLogics.Value);
+            }
         }
 
         private void createConfigEvents()
         {
             Enabled.SettingChanged += (object sender, EventArgs e) =>
             {
+                if (LogicPatchManager.Method == LogicDisablingMethod.BigBrain)
+                {
+                    return;
+                }
+
                 LogicPatchManager.ApplyChanges();
             };
 
-            DisableTestLogics.SettingChanged += (object sender, EventArgs e) =>
+            DisableTestLogics.SettingChanged += toggleLayers;
+        }
+
+        private void toggleLayers(object sender, EventArgs e)
+        {
+            if (LogicPatchManager.Method != LogicDisablingMethod.BigBrain)
             {
                 toggleTestLogics(!DisableTestLogics.Value);
-            };
+                return;
+            }
+
+            if (DisableTestLogics.Value)
+            {
+                removeLayers();
+            }
+            else
+            {
+                restoreLayers();
+            }
         }
 
         private void toggleTestLogics(bool value)
@@ -64,6 +91,20 @@ namespace SPTBrainAnalyzer
             EFT.WildSpawnType.assaultGroup.ToggleLogic("Pmc", value);
 
             LogicPatchManager.ApplyChanges();
+        }
+
+        private void removeLayers()
+        {
+            List<string> scavLayerNames = new List<string>() { "Pmc", "AssaultHaveEnemy", "AdvAssaultTarget", "Simple Target", "Help", "Pursuit" };
+            List<string> scavBrainNanes = new List<string>() { "Assault", "PMC" };
+            DrakiaXYZ.BigBrain.Brains.BrainManager.RemoveLayers(scavLayerNames, scavBrainNanes);
+        }
+
+        private void restoreLayers()
+        {
+            List<string> scavLayerNames = new List<string>() { "Pmc", "AssaultHaveEnemy", "AdvAssaultTarget", "Simple Target", "Help", "Pursuit" };
+            List<string> scavBrainNanes = new List<string>() { "Assault", "PMC" };
+            DrakiaXYZ.BigBrain.Brains.BrainManager.RestoreLayers(scavLayerNames, scavBrainNanes);
         }
     }
 }

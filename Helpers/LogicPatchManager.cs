@@ -14,12 +14,13 @@ namespace SPTBrainAnalyzer.Helpers
     public enum LogicDisablingMethod
     {
         ShallUseNowPatch,
-        RemoveFromDictionary
+        RemoveFromDictionary,
+        BigBrain
     }
 
     public static class LogicPatchManager
     {
-        public static LogicDisablingMethod Method { get; set; } = LogicDisablingMethod.RemoveFromDictionary;
+        public static LogicDisablingMethod Method { get; set; } = LogicDisablingMethod.BigBrain;
 
         private static Dictionary<string, Type> logicNames = new Dictionary<string, Type>();
         private static Dictionary<Type, object> logicPatches = new Dictionary<Type, object>();
