@@ -20,24 +20,9 @@ namespace SPTBrainAnalyzer.Patches
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(StandartBotBrain __instance, BotOwner ___botOwner_0)
+        protected static void PatchPostfix(StandartBotBrain __instance, BotOwner ___botOwner_0)
         {
-            try
-            {
-                LogicPatchManager.UpdateActiveBrainLayers(___botOwner_0);
-            }
-            catch (Exception e)
-            {
-                LoggingUtil.LogError("Cannot update active brain layers for " + ___botOwner_0.name + ": " + e.Message);
-                LoggingUtil.LogError(e.StackTrace);
-            }
-
-            runAnalysis(___botOwner_0);
-        }
-
-        private static void runAnalysis(BotOwner ___botOwner_0)
-        {
-            if (ranAnalysis)
+            if (ranAnalysis || !SPTBrainAnalyzerPlugin.Enabled.Value)
             {
                 return;
             }

@@ -16,14 +16,18 @@ namespace SPTBrainAnalyzer
         private static readonly string CSVHeaderRow = "WildSpawnType,Brain Type,Brain Type Class,Layer Type,Layer Type Class,Layer Priority,Layer Index";
 
         private static FieldInfo brainDictionaryField = null;
+        private static FieldInfo brainManagerInstanceField = null;
+        private static FieldInfo activatedBotsField = null;
+
+        public static void Init()
+        {
+            brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
+            brainManagerInstanceField = AccessTools.Field(typeof(DrakiaXYZ.BigBrain.Brains.BrainManager), "_instance");
+            activatedBotsField = AccessTools.Field(typeof(DrakiaXYZ.BigBrain.Brains.BrainManager), "ActivatedBots");
+        }
 
         public static void AnalyzeBrainsOfAllWildSpawnTypes(BotOwner donorOwner)
         {
-            if (!SPTBrainAnalyzerPlugin.Enabled.Value || !SPTBrainAnalyzerPlugin.CreateCSVFile.Value)
-            {
-                return;
-            }
-
             LoggingUtil.LogWarning("Analyzing brains using " + donorOwner.name + "...");
 
             StringBuilder sb = new StringBuilder();
@@ -38,7 +42,7 @@ namespace SPTBrainAnalyzer
                     WildSpawnType wildSpawnType = (WildSpawnType)Enum.Parse(typeof(WildSpawnType), wildSpawnTypeName);
 
                     donorOwner.Profile.Info.Settings.Role = wildSpawnType;
-                    donorOwner.Brain.Activate();
+                    donorOwner.activateBrain();
 
                     List<string> CSVLines = donorOwner.Brain.BaseBrain.getCSVLinesForBaseBrain(wildSpawnType);
                     foreach (string CSVLine in CSVLines)
@@ -58,7 +62,7 @@ namespace SPTBrainAnalyzer
             donorOwner.Brain.BaseBrain.erase();
 
             donorOwner.Profile.Info.Settings.Role = currentWildSpawnType;
-            donorOwner.Brain.Activate();
+            donorOwner.activateBrain();
 
             LoggingUtil.LogWarning("Analyzing brains...done. " + donorOwner.name + " is now broken!");
 
@@ -68,12 +72,39 @@ namespace SPTBrainAnalyzer
 
         public static Dictionary<int, AICoreLayerClass<BotLogicDecision>> GetBrainLayerDictionary(this BaseBrain brain)
         {
-            if (brainDictionaryField == null)
+            return brainDictionaryField.GetValue(brain) as Dictionary<int, AICoreLayerClass<BotLogicDecision>>;
+        }
+
+        private static void activateBrain(this BotOwner botOwner)
+        {
+            DrakiaXYZ.BigBrain.Brains.BrainManager brainManager = (DrakiaXYZ.BigBrain.Brains.BrainManager)brainManagerInstanceField.GetValue(null);
+            if (brainManager == null)
             {
-                brainDictionaryField = AccessTools.Field(typeof(AICoreStrategyAbstractClass<BotLogicDecision>), "dictionary_0");
+                throw new InvalidOperationException("BrainManager is null");
             }
 
-            return brainDictionaryField.GetValue(brain) as Dictionary<int, AICoreLayerClass<BotLogicDecision>>;
+            Dictionary<IPlayer, BotOwner> activatedBots = (Dictionary<IPlayer, BotOwner>)activatedBotsField.GetValue(brainManager);
+            if (activatedBots == null)
+            {
+                throw new InvalidOperationException("ActivatedBots is null");
+            }
+
+            if (!activatedBots.Remove(botOwner.GetPlayer))
+            {
+                LoggingUtil.LogWarning(botOwner.name + " was not found in ActivatedBots");
+            }
+            
+            botOwner.Brain.Activate();
+        }
+
+        private static void erase(this BaseBrain brain)
+        {
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.GetBrainLayerDictionary();
+
+            foreach (int layerIndex in brainDictionary.Keys.ToArray())
+            {
+                brain.method_3(layerIndex);
+            }
         }
 
         private static List<string> getCSVLinesForBaseBrain(this BaseBrain brain, WildSpawnType wildSpawnType)
@@ -92,16 +123,6 @@ namespace SPTBrainAnalyzer
             }
 
             return CSVLines;
-        }
-
-        private static void erase(this BaseBrain brain)
-        {
-            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.GetBrainLayerDictionary();
-
-            foreach (int layerIndex in brainDictionary.Keys.ToArray())
-            {
-                brain.method_3(layerIndex);
-            }
         }
     }
 }
