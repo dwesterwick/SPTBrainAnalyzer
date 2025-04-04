@@ -12,6 +12,8 @@ namespace SPTBrainAnalyzer
 {
     public static class BrainAnalyzerUtil
     {
+        public static bool IsRunningAnalysis { get; private set; } = false;
+
         private static readonly string CSVFilename = "BrainAnalysis.csv";
         private static readonly string CSVHeaderRow = "WildSpawnType,Brain Type,Brain Type Class,Layer Type,Layer Type Class,Layer Priority,Layer Index";
 
@@ -29,6 +31,7 @@ namespace SPTBrainAnalyzer
         public static void AnalyzeBrainsOfAllWildSpawnTypes(BotOwner donorOwner)
         {
             LoggingUtil.LogWarning("Analyzing brains using " + donorOwner.name + "...");
+            IsRunningAnalysis = true;
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(CSVHeaderRow);
@@ -64,6 +67,7 @@ namespace SPTBrainAnalyzer
             donorOwner.Profile.Info.Settings.Role = currentWildSpawnType;
             donorOwner.activateBrain();
 
+            IsRunningAnalysis = false;
             LoggingUtil.LogWarning("Analyzing brains...done. " + donorOwner.name + " is now broken!");
 
             string message = "CSV brain dump complete. Please exit the raid!";

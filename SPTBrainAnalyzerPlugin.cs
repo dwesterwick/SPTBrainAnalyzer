@@ -9,7 +9,7 @@ using SPTBrainAnalyzer.Helpers;
 
 namespace SPTBrainAnalyzer
 {
-    [BepInPlugin("com.DanW.BrainAnalyzer", "DanW-BrainAnalyzer", "1.1.1")]
+    [BepInPlugin("com.DanW.BrainAnalyzer", "DanW-BrainAnalyzer", "1.1.2")]
     public class SPTBrainAnalyzerPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<bool> Enabled;
@@ -24,6 +24,9 @@ namespace SPTBrainAnalyzer
             LoggingUtil.Logger = Logger;
 
             new Patches.BotOwnerBrainActivatePatch().Enable();
+            new Patches.SPTPMCBrainChangerDisablePatch().Enable();
+            new Patches.SPTPScavBrainChangerDisablePatch().Enable();
+            new Patches.SPTScavBrainChangerDisablePatch().Enable();
 
             Enabled = Config.Bind("Main", "Enabled", true, "Create a CSV file of all EFT brain types and brain layers when the first bot is generated");
             ShowDebugMessages = Config.Bind("Main", "Show debug messages", false, "Show additional debugging information");
