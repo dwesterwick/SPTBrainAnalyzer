@@ -9,7 +9,7 @@ using SPTBrainAnalyzer.Helpers;
 
 namespace SPTBrainAnalyzer
 {
-    [BepInPlugin("com.DanW.BrainAnalyzer", "DanW-BrainAnalyzer", "1.1.0")]
+    [BepInPlugin("com.DanW.BrainAnalyzer", "DanW-BrainAnalyzer", "1.1.1")]
     public class SPTBrainAnalyzerPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<bool> Enabled;

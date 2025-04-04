@@ -16,7 +16,7 @@ namespace SPTBrainAnalyzer.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(StandartBotBrain).GetMethod("Activate", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(StandartBotBrain).GetMethod(nameof(StandartBotBrain.Activate), BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPostfix]
