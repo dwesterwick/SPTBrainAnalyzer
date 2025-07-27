@@ -14,6 +14,7 @@ namespace SPTBrainAnalyzer
     public class SPTBrainAnalyzerPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<bool> Enabled;
+        public static ConfigEntry<bool> AnalyzeCurrentBrainFirst;
         public static ConfigEntry<bool> ShowDebugMessages;
 
         public static ConfigEntry<bool> DisableTestLogics;
@@ -30,6 +31,7 @@ namespace SPTBrainAnalyzer
             new Patches.SPTScavBrainChangerDisablePatch().Enable();
 
             Enabled = Config.Bind("Main", "Enabled", true, "Create a CSV file of all EFT brain types and brain layers when the first bot is generated");
+            AnalyzeCurrentBrainFirst = Config.Bind("Main", "Analyze Current Brain First", false, "Analyze the bot's existing brain before all other brain combinations");
             ShowDebugMessages = Config.Bind("Main", "Show debug messages", false, "Show additional debugging information");
 
             BrainAnalyzerUtil.Init();

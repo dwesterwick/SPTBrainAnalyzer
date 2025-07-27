@@ -12,8 +12,6 @@ namespace SPTBrainAnalyzer
 {
     public static class BrainAnalyzerUtil
     {
-        private static readonly bool ANALYZE_CURRENT_BRAIN = false;
-
         public static bool IsRunningAnalysis { get; private set; } = false;
 
         private static readonly string CSVFilename = "BrainAnalysis.csv";
@@ -38,7 +36,7 @@ namespace SPTBrainAnalyzer
 
             WildSpawnType currentWildSpawnType = donorOwner.Profile.Info.Settings.Role;
 
-            if (ANALYZE_CURRENT_BRAIN)
+            if (SPTBrainAnalyzerPlugin.AnalyzeCurrentBrainFirst.Value)
             {
                 List<string> tmpCSVLines = donorOwner.Brain.BaseBrain.getCSVLinesForBaseBrain(currentWildSpawnType);
                 foreach (string tmpCSVLine in tmpCSVLines)
