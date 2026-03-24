@@ -105,7 +105,7 @@ namespace SPTBrainAnalyzer
 
         private static void erase(this BaseBrain brain)
         {
-            foreach (int layerIndex in brain.dictionary_0.Keys.ToArray())
+            foreach (int layerIndex in brain.Dictionary_0.Keys.ToArray())
             {
                 brain.method_3(layerIndex);
             }
@@ -116,7 +116,7 @@ namespace SPTBrainAnalyzer
             List<string> CSVLines = new List<string>();
             Type brainType = brain.GetType();
 
-            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.dictionary_0;
+            Dictionary<int, AICoreLayerClass<BotLogicDecision>> brainDictionary = brain.Dictionary_0;
 
             LoggingUtil.LogInfo($"{brain.ShortName()} ({brainType.Name}):");
             foreach (int layerIndex in brainDictionary.Keys)

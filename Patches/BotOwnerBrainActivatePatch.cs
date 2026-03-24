@@ -20,7 +20,7 @@ namespace SPTBrainAnalyzer.Patches
         }
 
         [PatchPostfix]
-        protected static void PatchPostfix(StandartBotBrain __instance, BotOwner ___botOwner_0)
+        protected static void PatchPostfix(StandartBotBrain __instance, BotOwner ___BotOwner_0)
         {
             if (ranAnalysis || !SPTBrainAnalyzerPlugin.Enabled.Value)
             {
@@ -31,11 +31,11 @@ namespace SPTBrainAnalyzer.Patches
 
             try
             {
-                BrainAnalyzerUtil.AnalyzeBrainsOfAllWildSpawnTypes(___botOwner_0);
+                BrainAnalyzerUtil.AnalyzeBrainsOfAllWildSpawnTypes(___BotOwner_0);
             }
             catch (Exception e)
             {
-                LoggingUtil.LogError("Cannot run brain-layer analysis on " + ___botOwner_0.name + ": " + e.Message);
+                LoggingUtil.LogError("Cannot run brain-layer analysis on " + ___BotOwner_0.name + ": " + e.Message);
                 LoggingUtil.LogError(e.StackTrace);
             }
         }
